@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WTP Analysis Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/regression/2.0.1/regression.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+        }
+        /* Blue-themed input card */
+        .card-input {
+            background-color: #3b82f6; /* bg-blue-600 */
+            color: white;
+            border: none;
+        }
+        .card-input .card-body {
+             background-color: white;
+             color: #374151; /* text-gray-700 */
+             border-bottom-left-radius: 0.5rem;
+             border-bottom-right-radius: 0.5rem;
+        }
+        .card-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px #bfdbfe;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            cursor: pointer;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+         .table-input th {
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4b5563; /* text-gray-600 */
+            white-space: nowrap;
+        }
+        .table-input td {
+            padding: 0.25rem;
+        }
+        .table-input input {
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- Header -->
+        <header class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">WTP Analysis Calculator</h1>
+            <p class="text-lg text-gray-500 mt-1">Simulate and evaluate Water Treatment Plant design and performance.</p>
+            <button class="mt-4 text-sm font-semibold text-blue-600 border border-blue-600 rounded-md px-4 py-2 hover:bg-blue-50 transition-colors">
+                Switch to Theory View
+            </button>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Column: Inputs -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="card card-input">
+                    <div class="p-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        <h2 class="text-xl font-semibold">Input Data</h2>
+                    </div>
+                    <div class="card-body space-y-6">
+                        <div class="flex items-center gap-4">
+                            <label for="numReadings" class="font-medium whitespace-nowrap">Number of Readings:</label>
+                            <input type="number" id="numReadings" value="3" min="1" max="10" class="w-24">
+                            <button id="updateFields" class="btn btn-secondary text-sm py-2 px-4">Update Fields</button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                           <table id="readingsTable" class="w-full table-input">
+                                <thead></thead>
+                                <tbody></tbody>
+                           </table>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium mb-2">Graph Parameters</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="xAxis" class="block text-sm font-medium text-gray-700 mb-1">X-axis</label>
+                                    <select id="xAxis"></select>
+                                </div>
+                                <div>
+                                    <label for="yAxis" class="block text-sm font-medium text-gray-700 mb-1">Y-axis</label>
+                                    <select id="yAxis"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <button id="calculateBtn" class="w-full btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zM7 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 3a1 1 0 100 2h4a1 1 0 100-2H7zm0 3a1 1 0 100 2h2a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>
+                    Calculate & Generate Report
+                </button>
+            </div>
+            
+            <!-- Right Column: Info -->
+            <div class="space-y-6">
+                 <div class="card">
+                    <div class="card-header flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><h2 class="text-xl font-semibold text-gray-700">Instructions</h2></div>
+                    <div class="card-body">
+                        <ol class="list-decimal list-inside space-y-2 text-gray-600">
+                            <li>Enter the number of readings and click "Update Fields".</li>
+                            <li>Input all parameters for each trial in the table.</li>
+                            <li>Select parameters for the graph X and Y axes.</li>
+                            <li>Click "Calculate & Generate Report" to process.</li>
+                            <li>View results table, model calculation, graphs, and summary below.</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg><h2 class="text-xl font-semibold text-gray-700">Formulae</h2></div>
+                    <div class="card-body text-sm space-y-2 text-gray-600">
+                        <p><strong>Turbidity Removal Eff.</strong> = ((Initial - Final) / Initial) * 100</p>
+                        <p><strong>Detention Time (hr)</strong> = (Volume / Flow) * 24</p>
+                        <p><strong>SLR (m³/m²·d)</strong> = Flow / Surface Area</p>
+                        <p><strong>FLR (m³/m²·d)</strong> = Flow / Filter Area</p>
+                        <p><strong>Chlorine Demand (mg/L)</strong> = Dose – Residual</p>
+                        <p><strong>Power (W)</strong> = Head × Q × ρ × g</p>
+                    </div>
+                </div>
+                 <div class="card">
+                    <div class="card-header flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg><h2 class="text-xl font-semibold text-gray-700">Standard Constants</h2></div>
+                    <div class="card-body text-sm space-y-2 text-gray-600">
+                        <p><strong>g (Gravity):</strong> 9.81 m/s²</p>
+                        <p><strong>ρ (Water Density):</strong> 1000 kg/m³</p>
+                        <p><strong>Recommended DT:</strong> 2 - 4 hours</p>
+                        <p><strong>Recommended SLR:</strong> 20 - 40 m³/m²·d</p>
+                        <p><strong>Recommended FLR:</strong> 120 - 240 m³/m²·d</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div id="outputContainer" class="mt-8 space-y-8 hidden">
+             <!-- Results Table -->
+            <div class="card">
+                <div class="card-header"><h2 class="text-xl font-semibold text-gray-700">Calculated Performance Metrics</h2></div>
+                <div class="card-body overflow-x-auto">
+                    <table id="resultsTable" class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50"></thead>
+                        <tbody class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Model Calc & Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div class="card">
+                    <div class="card-header"><h2 class="text-xl font-semibold text-gray-700">Model Calculation for Trial 1</h2></div>
+                    <div id="modelCalc" class="card-body whitespace-pre-wrap text-sm text-gray-600"></div>
+                </div>
+                 <div class="card">
+                    <div class="card-header"><h2 class="text-xl font-semibold text-gray-700">WTP Performance Analysis Report</h2></div>
+                    <div id="summaryReport" class="card-body whitespace-pre-wrap text-sm text-gray-600"></div>
+                </div>
+            </div>
+
+            <!-- Graphs -->
+            <div class="card">
+                <div id="graphCardHeader" class="card-header"><h2 class="text-xl font-semibold text-gray-700">Graph</h2></div>
+                <div class="card-body"><canvas id="mainChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- CONSTANTS AND CONFIGURATION ---
+    const G = 9.81; // m/s^2
+    const RHO = 1000; // kg/m^3
+    const M3_DAY_TO_L_S = 0.011574;
+    const RECOMMENDED_RANGES = {
+        DT_sed: [2, 4],     // hours
+        SLR: [20, 40],      // m³/m²·day
+        FLR: [120, 240],    // m³/m²·day
+    };
+    
+    // Input fields definition
+    const inputFields = {
+        "Q (m³/day)": "Q_m3_day",
+        "Initial Turb. (NTU)": "initial_turbidity_NTU",
+        "Final Turb. (NTU)": "final_turbidity_NTU",
+        "Coag. Dose (mg/L)": "coagulant_dose_mg_L",
+        "Sed Tank L (m)": "sed_tank_L_m",
+        "Sed Tank B (m)": "sed_tank_B_m",
+        "Sed Tank D (m)": "sed_tank_D_m",
+        "Filter Area (m²)": "filter_area_m2",
+        "Cl₂ Dose (mg/L)": "chlorine_dose_mg_L",
+        "Cl₂ Residual (mg/L)": "chlorine_residual_mg_L",
+        "Pump Head (m)": "pump_head_m",
+        "Energy (kWh/day)": "energy_kWh_day"
+    };
+
+    const defaultReadings = [
+        { "Q_m3_day": 4320, "initial_turbidity_NTU": 50, "final_turbidity_NTU": 5, "coagulant_dose_mg_L": 20, "sed_tank_L_m": 20, "sed_tank_B_m": 10, "sed_tank_D_m": 3, "filter_area_m2": 25, "chlorine_dose_mg_L": 3, "chlorine_residual_mg_L": 0.5, "pump_head_m": 15, "energy_kWh_day": "" },
+        { "Q_m3_day": 5000, "initial_turbidity_NTU": 55, "final_turbidity_NTU": 4, "coagulant_dose_mg_L": 25, "sed_tank_L_m": 20, "sed_tank_B_m": 10, "sed_tank_D_m": 3, "filter_area_m2": 25, "chlorine_dose_mg_L": 3.2, "chlorine_residual_mg_L": 0.4, "pump_head_m": "", "energy_kWh_day": 95 },
+        { "Q_m3_day": 3800, "initial_turbidity_NTU": 45, "final_turbidity_NTU": 6, "coagulant_dose_mg_L": 18, "sed_tank_L_m": 20, "sed_tank_B_m": 10, "sed_tank_D_m": 3, "filter_area_m2": 25, "chlorine_dose_mg_L": 2.8, "chlorine_residual_mg_L": 0.6, "pump_head_m": 14, "energy_kWh_day": "" },
+    ];
+
+    // --- DOM ELEMENT REFERENCES ---
+    const numReadingsEl = document.getElementById('numReadings');
+    const updateFieldsBtn = document.getElementById('updateFields');
+    const readingsTableHead = document.querySelector('#readingsTable thead');
+    const readingsTableBody = document.querySelector('#readingsTable tbody');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const outputContainer = document.getElementById('outputContainer');
+    const xAxisSelect = document.getElementById('xAxis');
+    const yAxisSelect = document.getElementById('yAxis');
+    
+    let mainChart = null;
+
+    // --- DYNAMIC FIELD GENERATION ---
+    const createReadingFields = () => {
+        readingsTableHead.innerHTML = '';
+        readingsTableBody.innerHTML = '';
+        const count = parseInt(numReadingsEl.value, 10);
+        
+        // Create Headers
+        let headHTML = '<tr><th>Reading</th>';
+        for (const header in inputFields) {
+            headHTML += `<th>${header}</th>`;
+        }
+        headHTML += '</tr>';
+        readingsTableHead.innerHTML = headHTML;
+
+        // Create Body Rows
+        for (let i = 0; i < count; i++) {
+            const data = defaultReadings[i] || {};
+            let rowHTML = `<tr><td class="text-center font-medium text-gray-700">${i + 1}</td>`;
+            for (const key in inputFields) {
+                const dataKey = inputFields[key];
+                const value = data[dataKey] || '';
+                rowHTML += `<td><input type="number" data-key="${dataKey}" value="${value}"></td>`;
+            }
+            rowHTML += '</tr>';
+            readingsTableBody.innerHTML += rowHTML;
+        }
+    };
+
+    const populateGraphSelectors = (results) => {
+        xAxisSelect.innerHTML = '';
+        yAxisSelect.innerHTML = '';
+        const options = Object.keys(results[0]).filter(k => k !== 'Trial');
+        
+        options.forEach(opt => {
+            xAxisSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
+            yAxisSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
+        });
+        
+        // Set default selections
+        xAxisSelect.value = 'Flow (m³/day)';
+        yAxisSelect.value = 'DT (hr)';
+    };
+
+    // --- CALCULATION LOGIC (Ported from Python) ---
+    const calculateAllMetrics = (trialData) => {
+        // ... (calculation logic is unchanged, so keeping it as is)
+        if (trialData.Q_m3_day && !trialData.Q_L_s) {
+            trialData.Q_L_s = trialData.Q_m3_day * M3_DAY_TO_L_S;
+        } else if (trialData.Q_L_s && !trialData.Q_m3_day) {
+            trialData.Q_m3_day = trialData.Q_L_s / M3_DAY_TO_L_S;
+        }
+        const initial_turb = trialData.initial_turbidity_NTU || 0;
+        const final_turb = trialData.final_turbidity_NTU || 0;
+        const coag_eff = initial_turb > 0 ? ((initial_turb - final_turb) / initial_turb) * 100 : 0;
+        const sed_vol = (trialData.sed_tank_L_m || 0) * (trialData.sed_tank_B_m || 0) * (trialData.sed_tank_D_m || 0);
+        const sed_area = (trialData.sed_tank_L_m || 0) * (trialData.sed_tank_B_m || 0);
+        const q_m3_day = trialData.Q_m3_day || 0;
+        const dt_sed = q_m3_day > 0 ? (sed_vol / q_m3_day) * 24 : 0;
+        const slr = sed_area > 0 ? q_m3_day / sed_area : 0;
+        const filter_area = trialData.filter_area_m2 || 0;
+        const flr = filter_area > 0 ? q_m3_day / filter_area : 0;
+        const chlorine_demand = (trialData.chlorine_dose_mg_L || 0) - (trialData.chlorine_residual_mg_L || 0);
+        let energy_cost = 0;
+        if (trialData.energy_kWh_day) {
+            energy_cost = trialData.energy_kWh_day;
+        } else if (trialData.pump_head_m) {
+            const q_m3_s = q_m3_day / (24 * 3600);
+            const power_watts = trialData.pump_head_m * q_m3_s * RHO * G;
+            energy_cost = (power_watts / 1000) * 24;
+        }
+        return {
+            "Turbidity Removal Eff. (%)": parseFloat(coag_eff.toFixed(2)),
+            "DT (hr)": parseFloat(dt_sed.toFixed(2)),
+            "SLR (m³/m²·day)": parseFloat(slr.toFixed(2)),
+            "FLR (m³/m²·day)": parseFloat(flr.toFixed(2)),
+            "Chlorine Demand (mg/L)": parseFloat(chlorine_demand.toFixed(2)),
+            "Energy Cost (kWh/day)": parseFloat(energy_cost.toFixed(2)),
+        };
+    };
+    
+    // --- MAIN ANALYSIS FUNCTION ---
+    const runAnalysis = () => {
+        // 1. Collect data from fields
+        const inputReadings = [];
+        const tableRows = readingsTableBody.querySelectorAll('tr');
+        tableRows.forEach(row => {
+            const reading = {};
+            row.querySelectorAll('input[type="number"]').forEach(input => {
+                if (input.value !== '') {
+                    reading[input.dataset.key] = parseFloat(input.value);
+                }
+            });
+            inputReadings.push(reading);
+        });
+
+        // 2. Process all trials
+        const results = [];
+        inputReadings.forEach((trial, i) => {
+            const calcs = calculateAllMetrics(trial);
+            results.push({
+                "Trial": i + 1,
+                "Flow (m³/day)": trial.Q_m3_day || 0,
+                "Flow (L/s)": parseFloat((trial.Q_L_s || 0).toFixed(2)),
+                ...calcs,
+                "Coagulant Dose (mg/L)": trial.coagulant_dose_mg_L || 0,
+                "Residual Chlorine (mg/L)": trial.chlorine_residual_mg_L || 0
+            });
+        });
+        
+        // 3. Render all outputs
+        renderResultsTable(results);
+        renderModelCalculation(inputReadings[0], results[0]);
+        renderSummaryReport(inputReadings, results);
+        populateGraphSelectors(results);
+        renderGraph(results); // Changed from renderGraphs to renderGraph
+
+        outputContainer.classList.remove('hidden');
+        outputContainer.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    // --- OUTPUT RENDERING FUNCTIONS ---
+    const renderResultsTable = (results) => {
+        // ... (This function is largely unchanged)
+        const tableHead = document.querySelector('#resultsTable thead');
+        const tableBody = document.querySelector('#resultsTable tbody');
+        tableHead.innerHTML = '';
+        tableBody.innerHTML = '';
+        if (results.length === 0) return;
+        const headers = ["Trial", "Flow (m³/day)", "Flow (L/s)", "DT (hr)", "SLR (m³/m²·day)", "FLR (m³/m²·day)", "Turbidity Removal Eff. (%)", "Chlorine Demand (mg/L)", "Residual Chlorine (mg/L)", "Energy Cost (kWh/day)"];
+        let headerHtml = '<tr>';
+        headers.forEach(h => headerHtml += `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${h}</th>`);
+        headerHtml += '</tr>';
+        tableHead.innerHTML = headerHtml;
+        let bodyHtml = '';
+        results.forEach(row => {
+            bodyHtml += '<tr>';
+            headers.forEach(h => {
+                bodyHtml += `<td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${row[h]}</td>`;
+            });
+            bodyHtml += '</tr>';
+        });
+        tableBody.innerHTML = bodyHtml;
+    };
+
+    const renderModelCalculation = (trial1Data, trial1Result) => {
+        // ... (This function is largely unchanged)
+         if (!trial1Data || !trial1Result) {
+            document.getElementById('modelCalc').textContent = "Not enough data for model calculation.";
+            return;
+        }
+        const q = trial1Data.Q_m3_day || 0;
+        const it = trial1Data.initial_turbidity_NTU || 0, ft = trial1Data.final_turbidity_NTU || 0;
+        const sl = trial1Data.sed_tank_L_m || 0, sb = trial1Data.sed_tank_B_m || 0, sd = trial1Data.sed_tank_D_m || 0;
+        const sv = sl * sb * sd, sa = sl * sb;
+        const cd = trial1Data.chlorine_dose_mg_L || 0, cr = trial1Data.chlorine_residual_mg_L || 0;
+
+        let output = `1. Turbidity Removal Efficiency (%):\n`;
+        output += `   Result: ${trial1Result['Turbidity Removal Eff. (%)']} %\n\n`;
+        output += `2. Detention Time (DT) (hr):\n`;
+        output += `   Result: ${trial1Result['DT (hr)']} hours\n\n`;
+        output += `3. Surface Loading Rate (SLR) (m³/m²·day):\n`;
+        output += `   Result: ${trial1Result['SLR (m³/m²·day)']} m³/m²·day\n\n`;
+        output += `4. Filter Loading Rate (FLR) (m³/m²·day):\n`;
+        output += `   Result: ${trial1Result['FLR (m³/m²·day)']} m³/m²·day\n\n`;
+        output += `5. Chlorine Demand (mg/L):\n`;
+        output += `   Result: ${trial1Result['Chlorine Demand (mg/L)']} mg/L\n\n`;
+        output += `6. Energy Cost (kWh/day):\n`;
+        output += `   Result: ${trial1Result['Energy Cost (kWh/day)']} kWh/day`;
+        document.getElementById('modelCalc').textContent = output;
+    };
+
+    const renderSummaryReport = (inputData, results) => {
+        // ... (This function is largely unchanged)
+        if (results.length === 0) {
+            document.getElementById('summaryReport').textContent = "Not enough data for summary report.";
+            return;
+        }
+        let report = `1. Summary of Mean Values:\n`;
+        const means = {};
+        const keysToAverage = Object.keys(results[0]).filter(k => k !== 'Trial');
+        keysToAverage.forEach(key => {
+            const sum = results.reduce((acc, row) => acc + (row[key] || 0), 0);
+            means[key] = (sum / results.length).toFixed(2);
+            report += `   ${key}: ${means[key]}\n`;
+        });
+        report += `\n2. Design Parameter Compliance Check:\n`;
+        results.forEach(row => {
+            const dt_ok = (row['DT (hr)'] >= RECOMMENDED_RANGES.DT_sed[0] && row['DT (hr)'] <= RECOMMENDED_RANGES.DT_sed[1]) ? "OK" : "OUT OF RANGE";
+            const slr_ok = (row['SLR (m³/m²·day)'] >= RECOMMENDED_RANGES.SLR[0] && row['SLR (m³/m²·day)'] <= RECOMMENDED_RANGES.SLR[1]) ? "OK" : "OUT OF RANGE";
+            const flr_ok = (row['FLR (m³/m²·day)'] >= RECOMMENDED_RANGES.FLR[0] && row['FLR (m³/m²·day)'] <= RECOMMENDED_RANGES.FLR[1]) ? "OK" : "OUT OF RANGE";
+            report += `   Trial ${row['Trial']}: DT: ${dt_ok}, SLR: ${slr_ok}, FLR: ${flr_ok}\n`;
+        });
+        report += `\n3. Conclusion:\n   The analysis highlights performance deviations from standard criteria, suggesting areas for operational adjustment or design review.`;
+        document.getElementById('summaryReport').textContent = report;
+    };
+    
+    const renderGraph = () => {
+        if (mainChart) mainChart.destroy();
+        
+        // This function is now simplified and driven by the runAnalysis function
+        // which gathers all results first.
+        const results = [];
+        const tableRows = readingsTableBody.querySelectorAll('tr');
+        tableRows.forEach(row => {
+            const reading = {};
+            row.querySelectorAll('input[type="number"]').forEach(input => {
+                if (input.value !== '') {
+                     reading[input.dataset.key] = parseFloat(input.value);
+                }
+            });
+             const calcs = calculateAllMetrics(reading);
+             results.push({
+                ...calcs,
+                "Flow (m³/day)": reading.Q_m3_day || 0,
+                "Coagulant Dose (mg/L)": reading.coagulant_dose_mg_L || 0,
+             });
+        });
+
+        if (results.length < 2) return;
+
+        const xAxisKey = xAxisSelect.value;
+        const yAxisKey = yAxisSelect.value;
+
+        document.getElementById('graphCardHeader').querySelector('h2').textContent = `${xAxisKey} vs. ${yAxisKey}`;
+
+        const dataPoints = results.map(r => [r[xAxisKey], r[yAxisKey]]);
+        const result = regression.polynomial(dataPoints, { order: 2 });
+        const fitPoints = result.points.map(([x, y]) => ({ x, y }));
+
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        mainChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Data Points',
+                    data: results.map(r => ({ x: r[xAxisKey], y: r[yAxisKey] })),
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                }, {
+                    type: 'line',
+                    label: 'Best-fit Curve',
+                    data: fitPoints,
+                    borderColor: 'rgba(239, 68, 68, 0.8)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: false,
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: true,
+                scales: {
+                    x: { title: { display: true, text: xAxisKey } },
+                    y: { title: { display: true, text: yAxisKey } }
+                }
+            }
+        });
+    };
+
+    // --- EVENT LISTENERS ---
+    updateFieldsBtn.addEventListener('click', createReadingFields);
+    calculateBtn.addEventListener('click', runAnalysis);
+    xAxisSelect.addEventListener('change', renderGraph);
+    yAxisSelect.addEventListener('change', renderGraph);
+
+
+    // --- INITIALIZATION ---
+    createReadingFields();
+    // Initially populate selectors with dummy data to avoid errors.
+    // Real data will be populated after first calculation.
+    populateGraphSelectors([{"Flow (m³/day)":0, "DT (hr)":0}]); 
+});
+</script>
+</body>
+</html>
+

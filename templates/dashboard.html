@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - LabMate AI{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="mb-1">
+                        <i class="fas fa-flask me-2 text-primary"></i>
+                        Welcome to LabMate AI
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Your AI-powered lab assistant for modern laboratory work
+                        <span class="badge bg-{% if user.user_type == 'researcher' %}primary{% elif user.user_type == 'industry' %}success{% elif user.user_type == 'lab_manager' %}warning{% else %}info{% endif %} ms-2">
+                            {{ user.role }}
+                        </span>
+                        <!-- Debug info -->
+                        <small class="text-muted d-block mt-1">
+                            Debug: user_type={{ user.user_type }}, access_level={{ user.access_level }}
+                        </small>
+                    </p>
+                </div>
+                <div>
+                    <button class="btn btn-primary me-2" onclick="startVoiceCommand()">
+                        <i class="fas fa-microphone me-1"></i>Voice Command
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="startQuickTour()">
+                        <i class="fas fa-question-circle me-1"></i>Quick Tour
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Quick Actions -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% if user.user_type == 'industry' %}
+                        <!-- Industries: Show only Water and Oil Calculators -->
+                        <div class="col-6">
+<<<<<<< HEAD
+                            <a href="{{ url_for('water_calculator') }}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3">
+                                <i class="fas fa-tint fs-3 mb-2"></i>
+                                <span>Water Treatment Plant</span>
+                            </a>
+=======
+                            <div class="dropdown w-100">
+                                <button class="btn btn-outline-primary w-100 h-100 dropdown-toggle d-flex flex-column align-items-center justify-content-center p-3" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-calculator fs-3 mb-2"></i>
+                                    <span>Calculators</span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ url_for('calculator') }}">
+                                        <i class="fas fa-flask me-2"></i>Chemistry Calculator
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('calculator') }}?type=fluid">
+                                        <i class="fas fa-tachometer-alt me-2"></i>Fluid Mechanics
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('calculator') }}?type=venturimeter">
+                                        <i class="fas fa-chart-line me-2"></i>Venturimeter Calibration
+                                    </a></li>
+                                </ul>
+                            </div>
+>>>>>>> d704b12d7af1f1bfa7a332280670c64ecb7ade3b
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ url_for('oil_calculator') }}" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3">
+                                <i class="fas fa-oil-can fs-3 mb-2"></i>
+                                <span>Oil Industry Calculator</span>
+                            </a>
+                        </div>
+                        {% else %}
+                        <!-- Other users: Show all available tools -->
+                        <!-- Basic Calculator - Available to all users -->
+                        <div class="col-6">
+                            <a href="{{ url_for('calculator') }}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3">
+                                <i class="fas fa-calculator fs-3 mb-2"></i>
+                                <span>Basic Calculator</span>
+                            </a>
+                        </div>
+                        
+                        <!-- MSDS Lookup - Available to all users -->
+                        <div class="col-6">
+                            <a href="{{ url_for('msds') }}" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3">
+                                <i class="fas fa-file-alt fs-3 mb-2"></i>
+                                <span>MSDS Lookup</span>
+                            </a>
+                        </div>
+                        
+                        <!-- Safety Protocols - Available to all users -->
+                        <div class="col-6">
+                            <a href="{{ url_for('safety') }}" class="btn btn-outline-danger w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3">
+                                <i class="fas fa-shield-alt fs-3 mb-2"></i>
+                                <span>Safety Protocols</span>
+                            </a>
+                        </div>
+                        
+                        <!-- Advanced Calculators - Level 2+ access -->
+                        {% if user.access_level >= 2 %}
+                        <div class="col-6">
+                            <div class="dropdown w-100">
+                                <button class="btn btn-outline-success w-100 h-100 dropdown-toggle d-flex flex-column align-items-center justify-content-center p-3" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cogs fs-3 mb-2"></i>
+                                    <span>Advanced Tools</span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ url_for('calculator') }}?type=fluid">
+                                        <i class="fas fa-tachometer-alt me-2"></i>Fluid Mechanics
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('calculator') }}?type=venturimeter">
+                                        <i class="fas fa-chart-line me-2"></i>Venturimeter Calibration
+                                    </a></li>
+                                    {% if user.access_level >= 3 %}
+                                    <li><a class="dropdown-item" href="{{ url_for('calculator') }}?type=centrifugal">
+                                        <i class="fas fa-cog me-2"></i>Centrifugal Pump
+                                    </a></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Lab Reports - Level 2+ access -->
+                        {% if user.access_level >= 2 %}
+                        <div class="col-6">
+                            <a href="{{ url_for('documentation') }}" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3">
+                                <i class="fas fa-file-medical fs-3 mb-2"></i>
+                                <span>Lab Reports</span>
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Research Tools - Level 3 access only -->
+                        {% if user.access_level >= 3 %}
+                        <div class="col-6">
+                            <a href="{{ url_for('new_experiment') }}" class="btn btn-outline-dark w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3">
+                                <i class="fas fa-microscope fs-3 mb-2"></i>
+                                <span>Research Tools</span>
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2 text-info"></i>Recent Activity
+                    </h5>
+                    <a href="{{ url_for('activity_logs') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="activity-icon me-3">
+                                {% if activity.action_type == 'Calculation' %}
+                                    <i class="fas fa-calculator text-primary"></i>
+                                {% elif activity.action_type == 'MSDS Lookup' %}
+                                    <i class="fas fa-file-alt text-warning"></i>
+                                {% elif activity.action_type == 'Experiment' %}
+                                    <i class="fas fa-flask text-success"></i>
+                                {% else %}
+                                    <i class="fas fa-circle text-secondary"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-medium">{{ activity.action_type }}</div>
+                                <div class="text-muted small">{{ activity.description }}</div>
+                                <div class="text-muted small">{{ activity.timestamp.strftime('%H:%M') }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-history fs-1 mb-3"></i>
+                            <p>No recent activity</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Calculations -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2 text-success"></i>Recent Calculations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_calculations %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Reagent</th>
+                                        <th>Molarity (M)</th>
+                                        <th>Volume (mL)</th>
+                                        <th>Mass Needed</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for calc in recent_calculations %}
+                                    <tr>
+                                        <td>{{ calc.reagent }}</td>
+                                        <td>{{ "%.2f"|format(calc.molarity) }}</td>
+                                        <td>{{ "%.1f"|format(calc.volume) }}</td>
+                                        <td>{{ "%.3f"|format(calc.mass_needed) }}g</td>
+                                        <td>{{ calc.created_at.strftime('%d/%m %H:%M') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-calculator fs-1 mb-3"></i>
+                            <p>No calculations yet</p>
+                            <a href="{{ url_for('calculator') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Create First Calculation
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Lab Statistics -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2 text-info"></i>Lab Statistics
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <div class="display-4 text-primary fw-bold">{{ total_calculations }}</div>
+                        <div class="text-muted">Calculations Today</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="display-6 text-success fw-bold">{{ total_activities }}</div>
+                        <div class="text-muted">Activities Today</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+{% endblock %}

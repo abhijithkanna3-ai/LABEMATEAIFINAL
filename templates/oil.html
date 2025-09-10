@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oil & Gas Analysis Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/regression/2.0.1/regression.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+        }
+        .card-input {
+            background-color: #3b82f6; /* bg-blue-600 */
+            color: white;
+            border: none;
+        }
+        .card-input .card-body {
+             background-color: white;
+             color: #374151; /* text-gray-700 */
+             border-bottom-left-radius: 0.5rem;
+             border-bottom-right-radius: 0.5rem;
+        }
+        .card-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px #bfdbfe;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            cursor: pointer;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+         .table-input th {
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4b5563; /* text-gray-600 */
+            white-space: nowrap;
+        }
+        .table-input td {
+            padding: 0.25rem;
+        }
+        .table-input input {
+            text-align: center;
+            min-width: 80px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- Header -->
+        <header class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Oil & Gas Process Analysis</h1>
+            <p class="text-lg text-gray-500 mt-1">Simulate and evaluate key process parameters for oil and gas systems.</p>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Column: Inputs -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="card card-input">
+                    <div class="p-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        <h2 class="text-xl font-semibold">Input Data</h2>
+                    </div>
+                    <div class="card-body space-y-6">
+                        <div class="flex items-center gap-4">
+                            <label for="numReadings" class="font-medium whitespace-nowrap">Number of Readings:</label>
+                            <input type="number" id="numReadings" value="3" min="1" max="10" class="w-24">
+                            <button id="updateFields" class="btn btn-secondary text-sm py-2 px-4">Update Fields</button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                           <table id="readingsTable" class="w-full table-input">
+                                <thead></thead>
+                                <tbody></tbody>
+                           </table>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium mb-2">Graph Parameters</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="xAxis" class="block text-sm font-medium text-gray-700 mb-1">X-axis</label>
+                                    <select id="xAxis"></select>
+                                </div>
+                                <div>
+                                    <label for="yAxis" class="block text-sm font-medium text-gray-700 mb-1">Y-axis</label>
+                                    <select id="yAxis"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <button id="calculateBtn" class="w-full btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zM7 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 3a1 1 0 100 2h4a1 1 0 100-2H7zm0 3a1 1 0 100 2h2a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>
+                    Calculate & Generate Report
+                </button>
+            </div>
+            
+            <!-- Right Column: Info -->
+            <div class="space-y-6">
+                 <div class="card">
+                    <div class="card-header flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><h2 class="text-xl font-semibold text-gray-700">Instructions</h2></div>
+                    <div class="card-body">
+                        <ol class="list-decimal list-inside space-y-2 text-gray-600">
+                            <li>Enter the number of readings and click "Update Fields".</li>
+                            <li>Input all process parameters for each trial in the table.</li>
+                            <li>Select parameters for the graph X and Y axes.</li>
+                            <li>Click "Calculate & Generate Report" to process the data.</li>
+                            <li>View the results table, model calculation, and analysis report below.</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg><h2 class="text-xl font-semibold text-gray-700">Key Formulae</h2></div>
+                    <div class="card-body text-sm space-y-2 text-gray-600">
+                        <p><strong>Velocity (V)</strong> = 4 × Q / (π × D²)</p>
+                        <p><strong>Reynolds (Re)</strong> = (ρ × V × D) / μ</p>
+                        <p><strong>Pressure Drop (ΔP)</strong> = P_in - P_out</p>
+                        <p><strong>Hydraulic Power (Pw)</strong> = Q × ΔP</p>
+                        <p><strong>Efficiency (η)</strong> = (Pw / Pi) × 100</p>
+                        <p><strong>Retention Time (t)</strong> = V_separator / Q_oil</p>
+                    </div>
+                </div>
+                 <div class="card">
+                    <div class="card-header flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg><h2 class="text-xl font-semibold text-gray-700">Constants & Conversions</h2></div>
+                    <div class="card-body text-sm space-y-2 text-gray-600">
+                        <p><strong>bbl/day to m³/s:</strong> × 1.84e-6</p>
+                        <p><strong>MMSCFD to m³/s:</strong> × 0.3297</p>
+                        <p><strong>bar to Pa:</strong> × 100,000</p>
+                        <p><strong>cP to Pa·s:</strong> × 0.001</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div id="outputContainer" class="mt-8 space-y-8 hidden">
+             <!-- Results Table -->
+            <div class="card">
+                <div class="card-header"><h2 class="text-xl font-semibold text-gray-700">Calculated Process Metrics</h2></div>
+                <div class="card-body overflow-x-auto">
+                    <table id="resultsTable" class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50"></thead>
+                        <tbody class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Model Calc & Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div class="card">
+                    <div class="card-header"><h2 class="text-xl font-semibold text-gray-700">Model Calculation for Trial 1</h2></div>
+                    <div id="modelCalc" class="card-body whitespace-pre-wrap text-sm text-gray-600"></div>
+                </div>
+                 <div class="card">
+                    <div class="card-header"><h2 class="text-xl font-semibold text-gray-700">Process Analysis Report</h2></div>
+                    <div id="summaryReport" class="card-body whitespace-pre-wrap text-sm text-gray-600"></div>
+                </div>
+            </div>
+
+            <!-- Graph -->
+            <div class="card">
+                <div id="graphCardHeader" class="card-header"><h2 class="text-xl font-semibold text-gray-700">Graph</h2></div>
+                <div class="card-body"><canvas id="mainChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- CONSTANTS AND CONVERSIONS ---
+    const G = 9.81;
+    const PI = Math.PI;
+    const BBL_DAY_TO_M3_S = 0.158987 / (24 * 3600);
+    const MMSCFD_TO_M3_S = 1187 / 3600;
+    const BAR_TO_PA = 100000;
+    const CP_TO_PA_S = 0.001;
+    
+    // --- UI CONFIGURATION ---
+    const inputFields = {
+        "Q_oil (bbl/d)": "Q_oil_bbl_day",
+        "Q_gas (MMSCFD)": "Q_gas_MMSCFD",
+        "WC (%)": "water_cut_percent",
+        "P_in (bar)": "P_in_bar",
+        "P_out (bar)": "P_out_bar",
+        "ρ_oil (kg/m³)": "rho_oil_kg_m3",
+        "μ_oil (cP)": "mu_oil_cP",
+        "Pipe D (m)": "D_m",
+        "Pi (kW)": "Pi_kW",
+        "Sep. Vol (m³)": "separator_volume_m3"
+    };
+
+    const defaultReadings = [
+        { "Q_oil_bbl_day": 1200, "Q_gas_MMSCFD": 0.5, "water_cut_percent": 20, "P_in_bar": 25, "P_out_bar": 20, "rho_oil_kg_m3": 850, "mu_oil_cP": 2, "D_m": 0.2, "Pi_kW": 75, "separator_volume_m3": 5 },
+        { "Q_oil_bbl_day": 1500, "Q_gas_MMSCFD": 0.6, "water_cut_percent": 25, "P_in_bar": 30, "P_out_bar": 24, "rho_oil_kg_m3": 860, "mu_oil_cP": 2.5, "D_m": 0.2, "Pi_kW": 85, "separator_volume_m3": 5 },
+        { "Q_oil_bbl_day": 1800, "Q_gas_MMSCFD": 0.7, "water_cut_percent": 22, "P_in_bar": 35, "P_out_bar": 28, "rho_oil_kg_m3": 855, "mu_oil_cP": 2.2, "D_m": 0.2, "Pi_kW": 100, "separator_volume_m3": 5 },
+    ];
+
+    // --- DOM ELEMENT REFERENCES ---
+    const numReadingsEl = document.getElementById('numReadings');
+    const updateFieldsBtn = document.getElementById('updateFields');
+    const readingsTableHead = document.querySelector('#readingsTable thead');
+    const readingsTableBody = document.querySelector('#readingsTable tbody');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const outputContainer = document.getElementById('outputContainer');
+    const xAxisSelect = document.getElementById('xAxis');
+    const yAxisSelect = document.getElementById('yAxis');
+    let mainChart = null;
+
+    // --- DYNAMIC FIELD GENERATION ---
+    const createReadingFields = () => {
+        readingsTableHead.innerHTML = '';
+        readingsTableBody.innerHTML = '';
+        const count = parseInt(numReadingsEl.value, 10);
+        
+        let headHTML = '<tr><th>Trial</th>';
+        for (const header in inputFields) {
+            headHTML += `<th>${header}</th>`;
+        }
+        headHTML += '</tr>';
+        readingsTableHead.innerHTML = headHTML;
+
+        for (let i = 0; i < count; i++) {
+            const data = defaultReadings[i] || {};
+            let rowHTML = `<tr><td class="text-center font-medium text-gray-700">${i + 1}</td>`;
+            for (const key in inputFields) {
+                const dataKey = inputFields[key];
+                const value = data[dataKey] !== undefined ? data[dataKey] : '';
+                rowHTML += `<td><input type="number" data-key="${dataKey}" value="${value}"></td>`;
+            }
+            rowHTML += '</tr>';
+            readingsTableBody.innerHTML += rowHTML;
+        }
+    };
+
+    const populateGraphSelectors = (results) => {
+        xAxisSelect.innerHTML = '';
+        yAxisSelect.innerHTML = '';
+        const options = Object.keys(results[0]).filter(k => k !== 'Trial' && k !== 'Notes');
+        
+        options.forEach(opt => {
+            xAxisSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
+            yAxisSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
+        });
+        
+        xAxisSelect.value = 'Q_oil (bbl/day)';
+        yAxisSelect.value = 'ΔP (bar)';
+    };
+
+    // --- CALCULATION LOGIC ---
+    const calculateAllMetrics = (trialData) => {
+        // Prepare SI units
+        const si = {};
+        si.Q_oil_m3_s = (trialData.Q_oil_bbl_day || 0) * BBL_DAY_TO_M3_S;
+        si.Q_gas_m3_s = (trialData.Q_gas_MMSCFD || 0) * MMSCFD_TO_M3_S;
+        si.P_in_Pa = (trialData.P_in_bar || 0) * BAR_TO_PA;
+        si.P_out_Pa = (trialData.P_out_bar || 0) * BAR_TO_PA;
+        si.mu_oil_Pa_s = (trialData.mu_oil_cP || 0) * CP_TO_PA_S;
+        si.D_m = trialData.D_m || 0;
+        si.Pi_W = (trialData.Pi_kW || 0) * 1000;
+        si.rho_oil_kg_m3 = trialData.rho_oil_kg_m3 || 0;
+        si.separator_volume_m3 = trialData.separator_volume_m3 || 0;
+
+        // Calculations
+        const area = PI * Math.pow(si.D_m, 2) / 4;
+        const velocity = area > 0 ? si.Q_oil_m3_s / area : 0;
+        const reynolds_num = si.mu_oil_Pa_s > 0 ? (si.rho_oil_kg_m3 * velocity * si.D_m) / si.mu_oil_Pa_s : 0;
+        const delta_p_pa = si.P_in_Pa - si.P_out_Pa;
+        const delta_p_bar = delta_p_pa / BAR_TO_PA;
+        const pw_watts = si.Q_oil_m3_s * delta_p_pa;
+        const pw_kw = pw_watts / 1000;
+        const efficiency = si.Pi_W > 0 ? (pw_watts / si.Pi_W) * 100 : 0;
+        const gor = si.Q_oil_m3_s > 0 ? si.Q_gas_m3_s / si.Q_oil_m3_s : 0;
+        const ret_time_s = si.Q_oil_m3_s > 0 ? si.separator_volume_m3 / si.Q_oil_m3_s : 0;
+        const ret_time_min = ret_time_s / 60;
+
+        return {
+            "ΔP (bar)": parseFloat(delta_p_bar.toFixed(2)),
+            "V (m/s)": parseFloat(velocity.toFixed(2)),
+            "Re": Math.round(reynolds_num),
+            "Pw (kW)": parseFloat(pw_kw.toFixed(2)),
+            "η (%)": parseFloat(efficiency.toFixed(2)),
+            "GOR (m³/m³)": parseFloat(gor.toFixed(2)),
+            "t (min)": parseFloat(ret_time_min.toFixed(2))
+        };
+    };
+    
+    // --- MAIN ANALYSIS FUNCTION ---
+    const runAnalysis = () => {
+        const inputReadings = [];
+        const tableRows = readingsTableBody.querySelectorAll('tr');
+        tableRows.forEach(row => {
+            const reading = {};
+            row.querySelectorAll('input[type="number"]').forEach(input => {
+                if (input.value !== '') {
+                    reading[input.dataset.key] = parseFloat(input.value);
+                }
+            });
+            inputReadings.push(reading);
+        });
+
+        const results = [];
+        inputReadings.forEach((trial, i) => {
+            const calcs = calculateAllMetrics(trial);
+            const flow_regime = calcs['Re'] < 2000 ? "Laminar" : (calcs['Re'] > 4000 ? "Turbulent" : "Transitional");
+            let notes = `Flow is ${flow_regime}.`;
+            if (calcs['ΔP (bar)'] > 10) notes += " High ΔP flagged.";
+
+            results.push({
+                "Trial": i + 1,
+                "Q_oil (bbl/day)": trial.Q_oil_bbl_day || 0,
+                "Q_gas (MMSCFD)": trial.Q_gas_MMSCFD || 0,
+                "Water cut (%)": trial.water_cut_percent || 0,
+                "P_in (bar)": trial.P_in_bar || 0,
+                "P_out (bar)": trial.P_out_bar || 0,
+                "Pi (kW)": trial.Pi_kW || 0,
+                ...calcs,
+                "Notes": notes
+            });
+        });
+        
+        renderResultsTable(results);
+        renderModelCalculation(inputReadings[0], results[0]);
+        renderSummaryReport(results);
+        populateGraphSelectors(results);
+        renderGraph(results);
+
+        outputContainer.classList.remove('hidden');
+        outputContainer.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    // --- OUTPUT RENDERING FUNCTIONS ---
+    const renderResultsTable = (results) => {
+        const tableHead = document.querySelector('#resultsTable thead');
+        const tableBody = document.querySelector('#resultsTable tbody');
+        tableHead.innerHTML = ''; tableBody.innerHTML = '';
+        if (results.length === 0) return;
+        
+        const headers = ["Trial", "Q_oil (bbl/day)", "ΔP (bar)", "V (m/s)", "Re", "Pw (kW)", "Pi (kW)", "η (%)", "GOR (m³/m³)", "t (min)", "Notes"];
+        let headerHtml = '<tr>';
+        headers.forEach(h => headerHtml += `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${h}</th>`);
+        headerHtml += '</tr>';
+        tableHead.innerHTML = headerHtml;
+
+        let bodyHtml = '';
+        results.forEach(row => {
+            bodyHtml += '<tr>';
+            headers.forEach(h => {
+                bodyHtml += `<td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">${row[h]}</td>`;
+            });
+            bodyHtml += '</tr>';
+        });
+        tableBody.innerHTML = bodyHtml;
+    };
+
+    const renderModelCalculation = (trial1Data, trial1Result) => {
+        if (!trial1Data || !trial1Result) {
+            document.getElementById('modelCalc').textContent = "Not enough data for calculation.";
+            return;
+        }
+
+        const q_m3_s = (trial1Data.Q_oil_bbl_day || 0) * BBL_DAY_TO_M3_S;
+        const mu_Pa_s = (trial1Data.mu_oil_cP || 0) * CP_TO_PA_S;
+        let output = `1. Vol. Flow (Q_oil) in m³/s:\n   Result: ${q_m3_s.toExponential(3)} m³/s\n\n`;
+        output += `2. Velocity (V) in m/s:\n   Result: ${trial1Result['V (m/s)']} m/s\n\n`;
+        output += `3. Reynolds Number (Re):\n   Result: ${trial1Result['Re']}\n\n`;
+        output += `4. Pressure Drop (ΔP) in bar:\n   Result: ${trial1Result['ΔP (bar)']} bar\n\n`;
+        output += `5. Hydraulic Power (Pw) in kW:\n   Result: ${trial1Result['Pw (kW)']} kW\n\n`;
+        output += `6. Efficiency (η) in %:\n   Result: ${trial1Result['η (%)']} %`;
+        document.getElementById('modelCalc').textContent = output;
+    };
+
+    const renderSummaryReport = (results) => {
+        if (results.length === 0) return;
+
+        let report = `1. Flow Regime Classification:\n`;
+        const regimes = results.map(r => r.Notes.split('.')[0].split(' ')[2]);
+        const regimeCounts = regimes.reduce((acc, regime) => {
+            acc[regime] = (acc[regime] || 0) + 1;
+            return acc;
+        }, {});
+        for (const regime in regimeCounts) {
+            report += `   - ${regime}: ${regimeCounts[regime]} trial(s)\n`;
+        }
+
+        report += `\n2. Key Performance Indicators (Mean Values):\n`;
+        const meanEfficiency = results.reduce((sum, r) => sum + r['η (%)'], 0) / results.length;
+        const meanGOR = results.reduce((sum, r) => sum + r['GOR (m³/m³)'], 0) / results.length;
+        const meanDeltaP = results.reduce((sum, r) => sum + r['ΔP (bar)'], 0) / results.length;
+        report += `   - Mean Efficiency: ${meanEfficiency.toFixed(2)} %\n`;
+        report += `   - Mean GOR: ${meanGOR.toFixed(2)} m³/m³\n`;
+        report += `   - Mean Pressure Drop: ${meanDeltaP.toFixed(2)} bar\n\n`;
+
+        report += `3. Peak Performance and Risks:\n`;
+        const maxEffRow = results.reduce((max, row) => row['η (%)'] > max['η (%)'] ? row : max, results[0]);
+        report += `   - Max efficiency of ${maxEffRow['η (%)']}% in Trial ${maxEffRow['Trial']}.\n`;
+        const highDpTrials = results.filter(r => r.Notes.includes("High ΔP")).map(r => r.Trial);
+        if (highDpTrials.length > 0) {
+            report += `   - High ΔP flagged in Trial(s): ${highDpTrials.join(', ')}.\n`;
+        } else {
+            report += `   - No excessive pressure drops were flagged.\n`;
+        }
+        
+        report += `\n4. Conclusion:\n   Analysis shows predominantly turbulent flow. The efficiency curve can guide operations to the most energy-effective flow rate.`;
+        document.getElementById('summaryReport').textContent = report;
+    };
+    
+    const renderGraph = (results) => {
+        if (mainChart) mainChart.destroy();
+        if (results.length < 2) return;
+
+        const xAxisKey = xAxisSelect.value;
+        const yAxisKey = yAxisSelect.value;
+        document.getElementById('graphCardHeader').querySelector('h2').textContent = `${xAxisKey} vs. ${yAxisKey}`;
+
+        const dataPoints = results.map(r => [r[xAxisKey], r[yAxisKey]]);
+        const result = regression.polynomial(dataPoints.filter(p => !isNaN(p[0]) && !isNaN(p[1])), { order: 2 });
+        const fitPoints = result.points.map(([x, y]) => ({ x, y }));
+
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        mainChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Data Points',
+                    data: results.map(r => ({ x: r[xAxisKey], y: r[yAxisKey] })),
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                }, {
+                    type: 'line',
+                    label: 'Best-fit Curve',
+                    data: fitPoints,
+                    borderColor: 'rgba(239, 68, 68, 0.8)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: false,
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: true,
+                scales: {
+                    x: { title: { display: true, text: xAxisKey } },
+                    y: { title: { display: true, text: yAxisKey } }
+                }
+            }
+        });
+    };
+
+    const updateGraphOnSelection = () => {
+        const results = [];
+        const tableRows = readingsTableBody.querySelectorAll('tr');
+        if (tableRows.length === 0 || !outputContainer.classList.contains('hidden')) {
+             runAnalysis();
+        }
+    }
+
+    // --- EVENT LISTENERS ---
+    updateFieldsBtn.addEventListener('click', createReadingFields);
+    calculateBtn.addEventListener('click', runAnalysis);
+    xAxisSelect.addEventListener('change', updateGraphOnSelection);
+    yAxisSelect.addEventListener('change', updateGraphOnSelection);
+
+    // --- INITIALIZATION ---
+    createReadingFields();
+    populateGraphSelectors([{"Q_oil (bbl/day)":0, "ΔP (bar)":0}]); 
+});
+</script>
+</body>
+</html>
+

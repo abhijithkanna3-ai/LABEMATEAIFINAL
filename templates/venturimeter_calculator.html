@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Venturimeter Calibration Calculator - LabMate AI{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-1">
+                <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                Venturimeter Calibration Calculator
+            </h1>
+            <div class="mt-3">
+                <a href="{{ url_for('calculator') }}" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-flask me-1"></i>Chemistry Calculator
+                </a>
+                <a href="{{ url_for('calculator') }}?type=centrifugal_pump" class="btn btn-info btn-sm">
+                    <i class="fas fa-cog me-1"></i>Switch to Centrifugal Pump Calculator
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Input Form -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Experiment Setup
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Constants Section -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">Experiment Constants</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="d1" class="form-label">Inlet diameter (d₁)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="d1" value="19" step="0.1">
+                                    <span class="input-group-text">mm</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="d2" class="form-label">Throat diameter (d₂)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="d2" value="9.55" step="0.01">
+                                    <span class="input-group-text">mm</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tank_length" class="form-label">Tank length</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="tank_length" value="0.49" step="0.01">
+                                    <span class="input-group-text">m</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tank_width" class="form-label">Tank width</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="tank_width" value="0.49" step="0.01">
+                                    <span class="input-group-text">m</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="water_height" class="form-label">Height of water collected</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="water_height" value="0.10" step="0.01">
+                                    <span class="input-group-text">m</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="conversion_factor" class="form-label">Conversion factor for head</label>
+                                <input type="number" class="form-control" id="conversion_factor" value="12.6" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Readings Section -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="text-primary mb-0">Experimental Readings</h6>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="addTrial">
+                                <i class="fas fa-plus me-1"></i>Add Trial
+                            </button>
+                        </div>
+                        <div id="readingsContainer">
+                            <!-- Trial inputs will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Calculate Button -->
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-primary btn-lg" id="calculateBtn">
+                            <i class="fas fa-calculator me-2"></i>Calculate Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Panel -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Experiment Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-info">Formulae Used:</h6>
+                    <ul class="list-unstyled small">
+                        <li><strong>Area:</strong> a = πd²/4</li>
+                        <li><strong>Volume:</strong> V = Area × Height</li>
+                        <li><strong>Head:</strong> H = [(h₁-h₂)/100] × 12.6</li>
+                        <li><strong>Qt:</strong> (a₁×a₂×√(2gH))/√(a₁²-a₂²)</li>
+                        <li><strong>Qa:</strong> V/t</li>
+                        <li><strong>Cd:</strong> Qa/Qt</li>
+                    </ul>
+                    
+                    <h6 class="text-info mt-3">Default Constants:</h6>
+                    <ul class="list-unstyled small">
+                        <li>g = 9.81 m/s²</li>
+                        <li>Conversion factor = 12.6</li>
+                        <li>Tank: 0.49 × 0.49 m²</li>
+                        <li>Water height = 0.10 m</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mt-3">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-success" id="loadSampleData">
+                            <i class="fas fa-download me-1"></i>Load Sample Data
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" id="clearAllData">
+                            <i class="fas fa-trash me-1"></i>Clear All Data
+                        </button>
+                        <button type="button" class="btn btn-outline-info" id="exportResults" disabled>
+                            <i class="fas fa-file-pdf me-1"></i>Export PDF Report
+                        </button>
+<<<<<<< HEAD
+                        <button type="button" class="btn btn-outline-warning" onclick="testVenturimeterFunction()">
+                            <i class="fas fa-bug me-1"></i>Test Function
+                        </button>
+=======
+>>>>>>> d704b12d7af1f1bfa7a332280670c64ecb7ade3b
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="row mt-4" id="resultsSection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Results
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="alert alert-success">
+                                <h6 class="alert-heading">Mean Discharge Coefficient</h6>
+                                <h4 class="mb-0" id="meanCd">-</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">Number of Trials</h6>
+                                <h4 class="mb-0" id="trialCount">-</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Table -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Trial</th>
+                                    <th>h₁ (cm)</th>
+                                    <th>h₂ (cm)</th>
+                                    <th>t (s)</th>
+                                    <th>H (m)</th>
+                                    <th>Qt (m³/s)</th>
+                                    <th>Qa (m³/s)</th>
+                                    <th>Cd</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTable">
+                                <!-- Results will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Model Calculation -->
+                    <div class="mb-4">
+                        <h6 class="text-primary">Model Calculation (Trial 1):</h6>
+                        <div class="bg-light p-3 rounded">
+                            <pre id="modelCalculation" class="mb-0 small"></pre>
+                        </div>
+                    </div>
+
+                    <!-- Graph -->
+                    <div class="text-center">
+                        <h6 class="text-primary mb-3">Graph: Theoretical vs Actual Flow Rate</h6>
+                        <img id="graphImage" class="img-fluid border rounded" style="max-width: 100%; height: auto;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<<<<<<< HEAD
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+=======
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+>>>>>>> d704b12d7af1f1bfa7a332280670c64ecb7ade3b
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+<<<<<<< HEAD
+                <h5>Processing experiment data...</h5>
+                <p class="text-muted">Please wait while we calculate your results.</p>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="forceCloseLoadingModal()">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <br><br>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="testModalClose()">
+                    <i class="fas fa-bug me-1"></i>Debug Close
+                </button>
+=======
+                <h5>Processing Calculations...</h5>
+                <p class="text-muted">Please wait while we calculate your results.</p>
+>>>>>>> d704b12d7af1f1bfa7a332280670c64ecb7ade3b
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Error
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage">An error occurred during calculation.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/venturimeter.js') }}"></script>
+{% endblock %}
+
